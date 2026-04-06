@@ -1,0 +1,36 @@
+---
+description: 
+alwaysApply: false
+enabled: true
+updatedAt: 2026-04-04T16:37:23.689Z
+provider: 
+---
+
+# 业务接口埋点规则
+
+## 目标
+在关键业务接口中添加埋点调用
+
+## 步骤
+
+### 1. papers.py
+- 导入 Tracker
+- 在上传成功处添加 upload_count 计数
+- 在删除文献处添加事件
+
+### 2. chat.py
+- 导入 Tracker
+- 在发送消息处添加 chat_count 计数
+- 在创建会话处添加事件
+
+### 3. review.py
+- 导入 Tracker
+- 在生成综述处添加 review_count 计数
+
+### 4. charts.py
+- 导入 Tracker
+- 在生成图表处添加 chart_count 计数
+
+### 5. auth.py
+- 导入 Tracker
+- 在注册/登录处添加事件

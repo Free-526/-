@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI论文小助手</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f0f2f5;
+            color: #333;
+        }
+        
+        /* 侧边栏 */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 240px;
+            height: 100vh;
+            background: #fff;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+        
+        .logo {
+            padding: 24px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .logo h1 {
+            font-size: 20px;
+            color: #1890ff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #1890ff, #36cfc9);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+        
+        .nav-menu {
+            padding: 16px 12px;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            margin-bottom: 4px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #666;
+        }
+        
+        .nav-item:hover {
+            background: #f6ffed;
+            color: #52c41a;
+        }
+        
+        .nav-item.active {
+            background: #e6f7ff;
+            color: #1890ff;
+        }
+        
+        .nav-icon {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+        
+        /* 主内容区 */
+        .main-content {
+            margin-left: 240px;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: #fff;
+            padding: 16px 24px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-title {
+            font-size: 20px;
+            font-weight: 500;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .btn-primary {
+            background: #1890ff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #40a9ff;
+        }
+        
+        .btn-default {
+            background: #fff;
+            border: 1px solid #d9d9d9;
+            color: #666;
+        }
+        
+        .btn-default:hover {
+            border-color: #1890ff;
+            color: #1890ff;
+        }
+        
+        /* 内容区域 */
+        .content {
+            padding: 24px;
+        }
+        
+        .page {
+            display: none;
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        /* 卡片 */
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .card-title {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        /* 上传区域 */
+        .upload-zone {
+            border: 2px dashed #d9d9d9;
+            border-radius: 12px;
+            padding: 48px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .upload-zone:hover {
+            border-color: #1890ff;
+            background: #f6ffed;
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            color: #bfbfbf;
+            margin-bottom: 16px;
+        }
+        
+        .upload-text {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .upload-hint {
+            color: #999;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+        
+        /* 文件列表 */
+        .file-list {
+            margin-top: 16px;
+        }
+        
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: #f6ffed;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .file-icon {
+            font-size: 24px;
+            margin-right: 12px;
+        }
+        
+        .file-info {
+            flex: 1;
+        }
+        
+        .file-name {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        
+        .file-meta {
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .file-status {
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .status-processing {
+            background: #e6f7ff;
+            color: #1890ff;
+        }
+        
+        .status-done {
+            background: #f6ffed;
+            color: #52c41a;
+        }
+        
+        /* 聊天界面 */
+        .chat-container {
+            display: flex;
+            height: calc(100vh - 140px);
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .chat-sidebar {
+            width: 260px;
+            border-right: 1px solid #f0f0f0;
+            background: #fafafa;
+            padding: 16px;
+        }
+        
+        .chat-list {
+            margin-top: 12px;
+        }
+        
+        .chat-item {
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 4px;
+            transition: all 0.3s;
+        }
+        
+        .chat-item:hover, .chat-item.active {
+            background: #e6f7ff;
+        }
+        
+        .chat-item-title {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        
+        .chat-item-time {
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+        
+        .message {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        
+        .message.user .message-avatar {
+            background: #e6f7ff;
+        }
+        
+        .message.assistant .message-avatar {
+            background: #f6ffed;
+        }
+        
+        .message-content {
+            flex: 1;
+            background: #f5f5f5;
+            padding: 16px;
+            border-radius: 12px;
+            max-width: 80%;
+        }
+        
+        .message.user .message-content {
+            background: #e6f7ff;
+        }
+        
+        .chat-input-area {
+            padding: 16px 24px;
+            border-top: 1px solid #f0f0f0;
+        }
+        
+        .chat-input-wrapper {
+            display: flex;
+            gap: 12px;
+            background: #f5f5f5;
+            padding: 8px;
+            border-radius: 24px;
+        }
+        
+        .chat-input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 8px 16px;
+            font-size: 14px;
+            outline: none;
+        }
+        
+        .chat-send {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: #1890ff;
+            color: white;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        
+        /* 综述生成 */
+        .review-form {
+            display: grid;
+            gap: 16px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .form-label {
+            font-weight: 500;
+            color: #666;
+        }
+        
+        .form-input, .form-textarea, .form-select {
+            padding: 10px 16px;
+            border: 1px solid #d9d9d9;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            outline: none;
+            border-color: #1890ff;
+            box-shadow: 0 0 0 3px rgba(24,144,255,0.1);
+        }
+        
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .review-output {
+            background: #f6ffed;
+            border: 1px solid #b7eb8f;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 16px;
+            min-height: 300px;
+            white-space: pre-wrap;
+            line-height: 1.8;
+        }
+        
+        /* 图表生成 */
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 24px;
+        }
+        
+        .chart-config {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .chart-preview {
+            background: #f5f5f5;
+            border-radius: 8px;
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .chart-placeholder {
+            text-align: center;
+            color: #999;
+        }
+        
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 侧边栏 -->
+    <aside class="sidebar">
+        <div class="logo">
+            <h1>
+                <div class="logo-icon">📚</div>
+                AI论文小助手
+            </h1>
+        </div>
+        <nav class="nav-menu">
+            <div class="nav-item active" data-page="papers">
+                <span class="nav-icon">📄</span>
+                <span>文献管理</span>
+            </div>
+            <div class="nav-item" data-page="chat">
+                <span class="nav-icon">💬</span>
+                <span>智能对话</span>
+            </div>
+            <div class="nav-item" data-page="review">
+                <span class="nav-icon">📝</span>
+                <span>综述生成</span>
+            </div>
+            <div class="nav-item" data-page="charts">
+                <span class="nav-icon">📊</span>
+                <span>图表生成</span>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- 主内容 -->
+    <main class="main-content">
+        <header class="header">
+            <h2 class="header-title" id="page-title">文献管理</h2>
+            <div class="header-actions">
+                <button class="btn btn-default">⚙️ 设置</button>
+                <button class="btn btn-primary">👤 用户</button>
+            </div>
+        </header>
+
+        <div class="content">
+            <!-- 文献管理页面 -->
+            <div class="page active" id="page-papers">
+                <div class="card">
+                    <div class="card-title">📤 上传文献</div>
+                    <div class="upload-zone" onclick="document.getElementById('file-input').click()">
+                        <div class="upload-icon">📁</div>
+                        <div class="upload-text">点击或拖拽PDF文件到此处上传</div>
+                        <div class="upload-hint">支持批量上传，单个文件不超过50MB</div>
+                        <input type="file" id="file-input" multiple accept=".pdf" style="display:none">
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">📚 文献列表</div>
+                    <div class="file-list" id="paper-list">
+                        <div class="file-item">
+                            <span class="file-icon">📄</span>
+                            <div class="file-info">
+                                <div class="file-name">示例论文：深度学习在医学影像中的应用研究.pdf</div>
+                                <div class="file-meta">12页 · 上传于 2024-01-15 · 作者：张三, 李四</div>
+                            </div>
+                            <span class="file-status status-done">✓ 已处理</span>
+                        </div>
+                        <div class="file-item">
+                            <span class="file-icon">📄</span>
+                            <div class="file-info">
+                                <div class="file-name">基于Transformer的自然语言处理综述.pdf</div>
+                                <div class="file-meta">25页 · 上传于 2024-01-14 · 处理中...</div>
+                            </div>
+                            <span class="file-status status-processing">⏳ 处理中</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 智能对话页面 -->
+            <div class="page" id="page-chat">
+                <div class="chat-container">
+                    <div class="chat-sidebar">
+                        <button class="btn btn-primary" style="width:100%; margin-bottom:12px;">
+                            ➕ 新建对话
+                        </button>
+                        <div class="chat-list">
+                            <div class="chat-item active">
+                                <div class="chat-item-title">关于深度学习的研究讨论</div>
+                                <div class="chat-item-time">2分钟前</div>
+                            </div>
+                            <div class="chat-item">
+                                <div class="chat-item-title">医学影像分析论文解读</div>
+                                <div class="chat-item-time">昨天</div>
+                            </div>
+                            <div class="chat-item">
+                                <div class="chat-item-title">Transformer架构相关问题</div>
+                                <div class="chat-item-time">3天前</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chat-main">
+                        <div class="chat-messages">
+                            <div class="message assistant">
+                                <div class="message-avatar">🤖</div>
+                                <div class="message-content">
+                                    您好！我是您的AI论文助手。我已经读取了您上传的文献，可以帮您：
+                                    <br>• 解答关于论文内容的问题
+                                    <br>• 总结论文核心观点
+                                    <br>• 对比不同文献的研究方法
+                                    <br>请问有什么可以帮助您的？
+                                </div>
+                            </div>
+                            <div class="message user">
+                                <div class="message-avatar">👤</div>
+                                <div class="message-content">
+                                    请总结一下这篇论文的主要创新点
+                                </div>
+                            </div>
+                            <div class="message assistant">
+                                <div class="message-avatar">🤖</div>
+                                <div class="message-content">
+                                    根据《深度学习在医学影像中的应用研究》这篇论文，主要创新点包括：
+                                    <br><br>1. <b>新型网络架构</b>：提出了一种改进的CNN-RNN混合模型
+                                    <br>2. <b>数据增强方法</b>：开发了针对医学影像的专用增强技术
+                                    <br>3. <b>多模态融合</b>：实现了CT和MRI影像的联合分析
+                                    <br><br>📖 引用来源：第3-5页
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chat-input-area">
+                            <div class="chat-input-wrapper">
+                                <input type="text" class="chat-input" placeholder="输入您的问题...">
+                                <button class="chat-send">➤</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 综述生成页面 -->
+            <div class="page" id="page-review">
+                <div class="card">
+                    <div class="card-title">📝 生成文献综述</div>
+                    <div class="review-form">
+                        <div class="form-group">
+                            <label class="form-label">综述主题</label>
+                            <input type="text" class="form-input" placeholder="请输入综述主题，例如：深度学习在医学影像中的应用">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">选择文献范围</label>
+                            <select class="form-select">
+                                <option>使用全部文献（2篇）</option>
+                                <option>自定义选择...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">字数要求</label>
+                            <select class="form-select">
+                                <option>约 2000 字</option>
+                                <option selected>约 3000 字</option>
+                                <option>约 5000 字</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">输出语言</label>
+                            <select class="form-select">
+                                <option selected>中文</option>
+                                <option>English</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" style="width:200px;">
+                            ✨ 开始生成综述
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">📋 生成结果</div>
+                    <div class="review-output">
+                        点击"开始生成综述"按钮，AI将自动分析您的文献并生成结构化综述...
+                        
+                        综述将包含以下部分：
+                        • 标题与摘要
+                        • 引言（研究背景与意义）
+                        • 研究现状（分章节论述）
+                        • 方法对比分析
+                        • 主要发现与结论
+                        • 研究不足与展望
+                        • 参考文献列表
+                    </div>
+                </div>
+            </div>
+
+            <!-- 图表生成页面 -->
+            <div class="page" id="page-charts">
+                <div class="card">
+                    <div class="card-title">📤 上传数据文件</div>
+                    <div class="upload-zone" onclick="document.getElementById('data-input').click()">
+                        <div class="upload-icon">📊</div>
+                        <div class="upload-text">点击或拖拽Excel/CSV文件到此处</div>
+                        <div class="upload-hint">支持 .xlsx, .xls, .csv 格式</div>
+                        <input type="file" id="data-input" accept=".csv,.xlsx,.xls" style="display:none">
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">📈 图表配置</div>
+                    <div class="chart-grid">
+                        <div class="chart-config">
+                            <div class="form-group">
+                                <label class="form-label">图表类型</label>
+                                <select class="form-select">
+                                    <option selected>折线图</option>
+                                    <option>柱状图</option>
+                                    <option>散点图</option>
+                                    <option>饼图</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">X轴数据</label>
+                                <select class="form-select">
+                                    <option>请选择列...</option>
+                                    <option>年份</option>
+                                    <option>月份</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Y轴数据</label>
+                                <select class="form-select">
+                                    <option>请选择列...</option>
+                                    <option>销量</option>
+                                    <option>增长率</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">图表标题</label>
+                                <input type="text" class="form-input" placeholder="输入图表标题">
+                            </div>
+                            <button class="btn btn-primary">生成图表</button>
+                        </div>
+                        <div class="chart-preview">
+                            <div class="chart-placeholder">
+                                <div style="font-size:48px; margin-bottom:16px;">📊</div>
+                                <div>图表预览区域</div>
+                                <div style="font-size:12px; margin-top:8px;">配置参数后点击生成</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // 页面切换
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                // 更新导航状态
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+                
+                // 切换页面
+                const pageName = this.dataset.page;
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                document.getElementById('page-' + pageName).classList.add('active');
+                
+                // 更新标题
+                const titles = {
+                    'papers': '文献管理',
+                    'chat': '智能对话',
+                    'review': '综述生成',
+                    'charts': '图表生成'
+                };
+                document.getElementById('page-title').textContent = titles[pageName];
+            });
+        });
+
+        // 文件上传提示
+        document.getElementById('file-input').addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                alert('已选择 ' + e.target.files.length + ' 个文件，准备上传...');
+            }
+        });
+
+        document.getElementById('data-input').addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                alert('已选择数据文件：' + e.target.files[0].name);
+            }
+        });
+
+        // 拖拽上传
+        document.querySelectorAll('.upload-zone').forEach(zone => {
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                zone.style.borderColor = '#1890ff';
+                zone.style.background = '#e6f7ff';
+            });
+            
+            zone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                zone.style.borderColor = '#d9d9d9';
+                zone.style.background = 'transparent';
+            });
+            
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.style.borderColor = '#d9d9d9';
+                zone.style.background = 'transparent';
+                alert('文件已拖入，准备上传...');
+            });
+        });
+    </script>
+</body>
+</html>

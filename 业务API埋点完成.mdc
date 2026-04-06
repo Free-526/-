@@ -1,0 +1,41 @@
+---
+description: 
+alwaysApply: true
+enabled: true
+updatedAt: 2026-04-04T16:43:24.919Z
+provider: 
+---
+
+已完成业务API埋点添加！
+
+**已添加埋点的文件和位置：**
+
+### 1. auth.py
+- **用户注册**：记录注册事件，增加 user_count 计数
+- **用户登录**：记录登录事件
+
+### 2. chat.py  
+- **创建会话**：记录 create_chat_session 事件
+- **发送消息**：记录 chat_message 事件，增加 chat_count 计数
+
+### 3. review.py
+- **生成综述**：记录 generate_review 事件，增加 review_count 计数
+
+### 4. charts.py
+- **上传数据集**：记录 upload_dataset 事件，增加 dataset_count 计数
+- **生成图表**：记录 generate_chart 事件，增加 chart_count 计数
+
+### 5. papers.py (之前已添加)
+- **上传论文**：记录 upload_paper 事件，增加 upload_count 计数
+
+**埋点指标汇总：**
+| 指标名 | 说明 | 所在文件 |
+|--------|------|----------|
+| user_count | 用户注册数 | auth.py |
+| chat_count | 聊天消息数 | chat.py |
+| review_count | 综述生成数 | review.py |
+| dataset_count | 数据集上传数 | charts.py |
+| chart_count | 图表生成数 | charts.py |
+| upload_count | 论文上传数 | papers.py |
+
+现在所有核心业务操作都有埋点跟踪，可以通过 `/api/analytics/dashboard` 查看统计数据。

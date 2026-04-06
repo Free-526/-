@@ -1,0 +1,52 @@
+---
+description: 
+alwaysApply: true
+enabled: true
+updatedAt: 2026-04-02T08:41:47.439Z
+provider: 
+---
+
+"""
+埋点数据API
+接收前端埋点数据
+"""
+from typing import Optional
+from fastapi import APIRouter, Depends, Request
+from sqlalchemy.orm import Session
+from pydantic import BaseModel
+
+from app.models.database import get_db, User
+from app.core.auth import get_current_user, get_optional_user
+from app.core.analytics import track_event, track_performance
+
+router = APIRouter()
+
+
+class TrackEventRequest(BaseModel):
+    """前端埋点请求"""
+    event_name: str
+    event_type: str = "click"
+    page_path: Optional[str] = None
+    properties: Optional[dict] = None
+
+
+class TrackPerformanceRequest(BaseModel):
+    """性能数据上报请求"""
+    operation: str
+    duration_ms: int
+    status: str = "success"
+    metadata: Optional[dict] = None
+
+
+@router.post("/track/event")
+async def track_event_endpoint(
+    request: TrackEventRequest,
+    http_request: Request,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_user)
+):
+    """
+    接收前端埋点事件
+    
+    前端在关键操作时调用此接口上报数据
+    """

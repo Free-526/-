@@ -1,0 +1,46 @@
+---
+description: 
+alwaysApply: false
+enabled: true
+updatedAt: 2026-04-04T09:33:41.906Z
+provider: 
+---
+
+# 自动化评测脚本规则
+
+## 目标
+创建完整的自动化评测体系，包括检索评测、性能压测、端到端测试
+
+## 文件结构
+```
+tests/
+├── evaluate_retrieval.py    # RAG检索效果评测
+├── benchmark.py             # API性能压测
+├── evaluate_end_to_end.py   # 端到端流程测试
+├── test_data/
+│   ├── test_queries.json    # 测试查询集
+│   └── sample_papers/       # 测试论文样本
+└── generate_report.py       # 报告生成
+```
+
+## 核心指标
+1. 检索：Recall@5, MRR, NDCG
+2. 性能：QPS, 响应延迟, 并发能力
+3. 端到端：成功率, 流程耗时, 准确率
+
+## 实现步骤
+1. 创建 tests/ 目录
+2. 编写 evaluate_retrieval.py - 向量检索评测
+3. 编写 benchmark.py - API性能测试
+4. 编写 evaluate_end_to_end.py - 完整流程测试
+5. 编写 generate_report.py - 生成评测报告
+6. 创建测试数据集
+
+## 运行方式
+```bash
+# 单个评测
+python tests/evaluate_retrieval.py
+
+# 全部评测
+python tests/run_all_evaluations.py
+```

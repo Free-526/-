@@ -1,0 +1,42 @@
+---
+description: 
+alwaysApply: false
+enabled: true
+updatedAt: 2026-04-04T16:26:27.229Z
+provider: 
+---
+
+# 埋点系统实现规则
+
+## 目标
+实现完整的用户行为埋点系统，包括后端模型、API接口和前端上报
+
+## 步骤
+
+### 1. 数据库模型（database.py）
+添加三个埋点相关模型：
+- EventLog: 用户行为事件
+- PerformanceLog: 性能监控
+- BusinessMetric: 业务指标计数
+
+### 2. 核心模块（analytics.py）
+创建 app/core/analytics.py，包含：
+- Tracker 类提供埋点方法
+- track_event: 记录用户行为
+- track_performance: 记录性能数据
+- increment_metric: 增加业务指标
+
+### 3. API接口（analytics.py）
+创建 app/api/analytics.py，提供：
+- POST /track/event: 接收前端埋点
+- POST /track/performance: 接收性能数据
+- GET /analytics/dashboard: 数据看板
+
+### 4. 路由注册
+在 api/__init__.py 注册 analytics 路由
+
+### 5. 业务接口埋点
+在 papers.py、chat.py、review.py、charts.py 的关键接口添加埋点调用
+
+### 6. 前端埋点
+在 app.html 添加上报代码和页面事件监听
