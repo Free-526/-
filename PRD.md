@@ -1,33 +1,68 @@
 # AI论文小助手 - 产品需求文档 (PRD)
 
-## 1. 项目概述
+**版本**: v1.0  
+**日期**: 2024年  
+**状态**: 初稿
+
+---
+
+## 目录
+
+1. [产品概述](#1-产品概述)
+2. [系统架构](#2-系统架构)
+3. [功能模块设计](#3-功能模块设计)
+4. [数据模型](#4-数据模型)
+5. [接口规范](#5-接口规范)
+6. [项目结构](#6-项目结构)
+7. [核心实现](#7-核心实现)
+8. [部署配置](#8-部署配置)
+9. [验收标准](#9-验收标准)
+10. [ roadmap](#10-roadmap)
+
+---
+
+## 1. 产品概述
 
 ### 1.1 产品定位
-AI论文小助手是一款面向学术研究人员、学生和科研工作者的智能文献管理工具。通过RAG（检索增强生成）技术，结合Kimi大模型能力，实现PDF文献的智能分析、对话问答、综述生成以及数据可视化功能。
 
-### 1.2 核心功能
-- 📚 **文献智能库**：多PDF导入、向量化存储、智能检索
-- 💬 **智能对话**：基于文献内容的问答系统
-- 📝 **综述生成**：自动生成文献综述
-- 📊 **图表生成**：Excel/CSV数据可视化（折线图、柱状图）
+AI论文小助手是一款面向学术研究人员、高校学生和科研工作者的智能文献管理工具。通过RAG（检索增强生成）技术，结合Kimi大模型的能力，实现PDF文献的智能解析、问答交互、综述生成及数据可视化。
 
-### 1.3 技术栈
-| 模块 | 技术选型 |
-|------|----------|
-| 后端框架 | Python + FastAPI |
-| 大模型 | Kimi (Moonshot AI API) |
-| 向量数据库 | FAISS |
-| 文档解析 | PyPDF2 / pdfplumber |
-| 文本向量化 | sentence-transformers |
-| 数据可视化 | matplotlib / plotly |
-| 前端 | React / Vue3 |
-| 数据存储 | SQLite / 本地文件 |
+### 1.2 目标用户
+
+| 用户群体 | 核心需求 | 使用场景 |
+|---------|---------|---------|
+| 研究生/博士生 | 快速理解文献、撰写综述 | 文献调研、论文写作 |
+| 科研人员 | 管理大量文献、知识提取 | 项目研究、成果整理 |
+| 高校教师 | 课程资料整理、教学辅助 | 备课、指导学生 |
+
+### 1.3 核心功能
+
+| 功能模块 | 功能描述 | 价值主张 |
+|---------|---------|---------|
+| 文献智能库 | 多PDF导入、向量化存储、语义检索 | 统一管理文献，支持全文检索 |
+| 智能对话 | 基于文献内容的问答系统 | 快速获取文献关键信息 |
+| 综述生成 | 自动生成结构化文献综述 | 大幅提升综述写作效率 |
+| 图表生成 | Excel/CSV数据可视化 | 一键生成学术图表 |
+
+### 1.4 技术栈
+
+| 层级 | 技术选型 | 说明 |
+|-----|---------|-----|
+| 后端框架 | Python + FastAPI | 高性能异步Web框架 |
+| 大模型 | Kimi (Moonshot AI) | 128K长上下文支持 |
+| 向量数据库 | FAISS | Facebook开源向量检索库 |
+| 文档解析 | pdfplumber | 精准提取PDF文本 |
+| 文本向量化 | sentence-transformers | 轻量级embedding模型 |
+| 数据可视化 | matplotlib + seaborn | 学术级图表绘制 |
+| 前端 | React 18 | 响应式用户界面 |
+| 数据存储 | SQLite | 轻量级本地数据库 |
 
 ---
 
 ## 2. 系统架构
 
-### 2.1 整体架构图
+### 2.1 整体架构
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                         前端层 (Frontend)                        │
@@ -38,7 +73,7 @@ AI论文小助手是一款面向学术研究人员、学生和科研工作者的
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                      API 层 (FastAPI)                           │
+│                      API 网关层 (FastAPI)                        │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐   │
 │  │ 文献管理API  │  │ 对话问答API  │  │    图表生成API        │   │
 │  └──────────────┘  └──────────────┘  └──────────────────────┘   │
@@ -65,7 +100,7 @@ AI论文小助手是一款面向学术研究人员、学生和科研工作者的
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 2.2 数据流图
+### 2.2 核心数据流
 
 #### 文献导入流程
 ```
@@ -75,65 +110,69 @@ AI论文小助手是一款面向学术研究人员、学生和科研工作者的
 #### 对话问答流程
 ```
 用户提问 → 问题向量化 → FAISS相似度检索 → 获取相关文本块 → 
-构建Prompt → Kimi API调用 → 返回答案
+构建Prompt → Kimi API调用 → 流式返回答案
 ```
 
 #### 综述生成流程
 ```
 选择文献范围 → 批量检索相关段落 → 构建综述Prompt → 
-Kimi生成综述 → 返回结构化综述文本
+Kimi生成综述 → 返回结构化文本
 ```
 
 ---
 
-## 3. 功能模块详细设计
+## 3. 功能模块设计
 
 ### 3.1 文献管理模块
 
 #### 3.1.1 PDF导入功能
-- **支持格式**：PDF文件（单文件或多文件批量上传）
-- **文件大小限制**：单个文件最大50MB，批量上传最多20个文件
-- **解析内容**：
-  - 标题、作者、摘要、关键词（自动提取）
-  - 正文内容（按段落分块）
-  - 图表说明文字
-- **元数据存储**：
-  ```sql
-  CREATE TABLE papers (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      file_name TEXT NOT NULL,
-      file_path TEXT NOT NULL,
-      title TEXT,
-      authors TEXT,
-      abstract TEXT,
-      keywords TEXT,
-      upload_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-      page_count INTEGER,
-      vector_index_id TEXT,
-      status TEXT DEFAULT 'active'
-  );
-  ```
 
-#### 3.1.2 文献库管理
-- 文献列表展示（支持分页、搜索、筛选）
-- 文献删除（同步删除向量库中的数据）
-- 文献分类标签（支持自定义标签）
-- 批量操作（批量删除、批量导出）
+**支持格式**
+- PDF文件（单文件或多文件批量上传）
+
+**限制条件**
+| 参数 | 限制值 | 说明 |
+|-----|-------|-----|
+| 单文件大小 | 50MB | 大文件自动分块处理 |
+| 批量上传数量 | 20个文件 | 并发处理 |
+
+**解析内容**
+| 字段 | 提取方式 | 存储位置 |
+|-----|---------|---------|
+| 标题 | 首段文本提取 | SQLite |
+| 作者 | 正则匹配 | SQLite (JSON) |
+| 摘要 | Abstract章节提取 | SQLite |
+| 关键词 | 正则匹配 | SQLite (JSON) |
+| 正文内容 | 按段落分块 | FAISS向量库 |
+| 页码信息 | pdfplumber获取 | SQLite |
+
+#### 3.1.2 文献库管理功能
+
+| 功能 | 描述 |
+|-----|-----|
+| 列表展示 | 分页、排序、搜索、筛选 |
+| 文献删除 | 软删除，同步清理向量数据 |
+| 标签分类 | 支持自定义标签体系 |
+| 批量操作 | 批量删除、批量导出 |
 
 ### 3.2 RAG对话模块
 
 #### 3.2.1 文本向量化策略
-- **分块策略**：
-  - 按段落分割（默认）
-  - 按固定token数分割（512 tokens/块，重叠128 tokens）
-  - 保留段落完整性
-- **向量化模型**：`sentence-transformers/all-MiniLM-L6-v2`（轻量级，384维）
-  - 或 `BAAI/bge-large-zh-v1.5`（中文效果更好，1024维）
-- **FAISS索引类型**：IndexFlatIP（内积相似度）或 IndexIVFFlat（大规模优化）
 
-#### 3.2.2 检索策略
+**分块策略**
+| 策略 | 参数 | 适用场景 |
+|-----|-----|---------|
+| 按段落分割 | - | 默认策略，保留语义完整性 |
+| 固定token数 | 512 tokens/块，重叠128 tokens | 长文档优化 |
+
+**向量模型配置**
+| 模型 | 维度 | 特点 |
+|-----|-----|-----|
+| all-MiniLM-L6-v2 | 384维 | 轻量级，英文优化 |
+| BAAI/bge-large-zh-v1.5 | 1024维 | 中文优化，精度更高 |
+
+**FAISS索引配置**
 ```python
-# 检索参数
 retrieval_config = {
     "top_k": 5,                    # 返回最相关的5个文本块
     "similarity_threshold": 0.7,   # 相似度阈值
@@ -142,12 +181,16 @@ retrieval_config = {
 }
 ```
 
-#### 3.2.3 对话管理
-- 多轮对话支持（保留对话历史）
-- 对话上下文关联（基于历史问题优化检索）
-- 答案溯源（显示引用来源文献及页码）
+#### 3.2.2 对话管理
 
-#### 3.2.4 Prompt设计
+| 功能 | 说明 |
+|-----|-----|
+| 多轮对话 | 保留对话历史，支持上下文关联 |
+| 答案溯源 | 显示引用来源文献及页码 |
+| 文献范围限定 | 支持指定特定文献进行问答 |
+
+#### 3.2.3 Prompt模板
+
 ```
 【系统提示】
 你是一位专业的学术助手，擅长分析和总结学术论文。请基于以下提供的文献内容，回答用户的问题。
@@ -171,11 +214,15 @@ retrieval_config = {
 ### 3.3 综述生成模块
 
 #### 3.3.1 生成模式
-- **全文综述**：基于整个文献库生成领域综述
-- **选文综述**：基于选定的若干文献生成综述
-- **主题综述**：基于特定主题词检索相关文献生成综述
 
-#### 3.3.2 综述结构
+| 模式 | 描述 | 适用场景 |
+|-----|-----|---------|
+| 全文综述 | 基于整个文献库生成领域综述 | 领域调研 |
+| 选文综述 | 基于选定的若干文献生成综述 | 专题研究 |
+| 主题综述 | 基于特定主题词检索相关文献生成综述 | 热点追踪 |
+
+#### 3.3.2 综述结构模板
+
 ```
 1. 研究背景与意义
 2. 相关研究综述
@@ -188,7 +235,8 @@ retrieval_config = {
 6. 参考文献列表
 ```
 
-#### 3.3.3 综述Prompt设计
+#### 3.3.3 综述Prompt模板
+
 ```
 【系统提示】
 你是一位资深的学术综述撰写专家。请基于以下文献内容，撰写一篇结构化的学术综述。
@@ -216,12 +264,15 @@ retrieval_config = {
 ### 3.4 图表生成模块
 
 #### 3.4.1 数据导入
-- **支持格式**：Excel (.xlsx, .xls)、CSV (.csv)
-- **文件大小限制**：最大10MB
-- **数据预览**：导入后显示数据预览（前10行）
-- **数据清洗提示**：自动识别缺失值、异常值
+
+| 参数 | 配置 |
+|-----|-----|
+| 支持格式 | Excel (.xlsx, .xls)、CSV (.csv) |
+| 文件大小限制 | 10MB |
+| 数据预览 | 显示前10行 |
 
 #### 3.4.2 图表配置
+
 | 配置项 | 选项 |
 |--------|------|
 | 图表类型 | 折线图、柱状图、散点图、饼图 |
@@ -231,16 +282,11 @@ retrieval_config = {
 | 样式设置 | 颜色主题、标题、图例、网格线 |
 | 导出格式 | PNG、JPG、SVG、PDF |
 
-#### 3.4.3 交互功能
-- 数据列自动识别（数值型、类别型、时间型）
-- 实时预览（配置变更即时刷新图表）
-- 图表交互（缩放、悬停提示、数据点选中）
-
 ---
 
-## 4. 数据库设计
+## 4. 数据模型
 
-### 4.1 SQLite 表结构
+### 4.1 SQLite 数据库设计
 
 ```sql
 -- 文献表
@@ -323,7 +369,6 @@ CREATE TABLE chart_configs (
 ### 4.2 FAISS 索引设计
 
 ```python
-# 索引结构
 class VectorIndex:
     def __init__(self, dim=384):
         self.dim = dim
@@ -355,12 +400,12 @@ class VectorIndex:
 
 ---
 
-## 5. API 接口设计
+## 5. 接口规范
 
 ### 5.1 文献管理接口
 
+#### 上传PDF
 ```yaml
-# 上传PDF
 POST /api/papers/upload
 Content-Type: multipart/form-data
 Body:
@@ -377,8 +422,10 @@ Response:
       "failed": []
     }
   }
+```
 
-# 获取文献列表
+#### 获取文献列表
+```yaml
 GET /api/papers?page=1&size=20&keyword=&sort_by=upload_time
 Response:
   {
@@ -394,26 +441,34 @@ Response:
       }]
     }
   }
+```
 
-# 删除文献
+#### 删除文献
+```yaml
 DELETE /api/papers/{id}
+```
 
-# 获取文献详情
+#### 获取文献详情
+```yaml
 GET /api/papers/{id}
 ```
 
 ### 5.2 对话接口
 
+#### 创建会话
 ```yaml
-# 创建会话
 POST /api/chat/sessions
 Body:
   { "session_name": "新会话" }
+```
 
-# 获取会话列表
+#### 获取会话列表
+```yaml
 GET /api/chat/sessions
+```
 
-# 发送消息
+#### 发送消息（流式响应）
+```yaml
 POST /api/chat/messages
 Body:
   {
@@ -421,20 +476,21 @@ Body:
     "message": "请总结这篇论文的主要贡献",
     "paper_ids": [1, 2, 3]  # 可选，指定文献范围
   }
-Response (Stream):
-  {
-    "type": "content",  # content / reference / done / error
-    "data": "..."
-  }
+Response (SSE Stream):
+  { "type": "content", "data": "..." }
+  { "type": "reference", "data": {...} }
+  { "type": "done" }
+```
 
-# 获取历史消息
+#### 获取历史消息
+```yaml
 GET /api/chat/sessions/{id}/messages
 ```
 
 ### 5.3 综述生成接口
 
+#### 生成综述（流式响应）
 ```yaml
-# 生成综述
 POST /api/review/generate
 Body:
   {
@@ -444,13 +500,12 @@ Body:
     "language": "zh",
     "structure": "standard"  # standard / custom
   }
-Response (Stream):
-  {
-    "type": "content",
-    "data": "..."
-  }
+Response (SSE Stream):
+  { "type": "content", "data": "..." }
+```
 
-# 导出综述
+#### 导出综述
+```yaml
 POST /api/review/export
 Body:
   {
@@ -461,8 +516,8 @@ Body:
 
 ### 5.4 图表生成接口
 
+#### 上传数据文件
 ```yaml
-# 上传数据文件
 POST /api/charts/datasets
 Content-Type: multipart/form-data
 Body:
@@ -479,8 +534,10 @@ Response:
       "preview": [...]
     }
   }
+```
 
-# 生成图表
+#### 生成图表
+```yaml
 POST /api/charts/generate
 Body:
   {
@@ -503,14 +560,16 @@ Response:
       "chart_data": {...}
     }
   }
+```
 
-# 导出图表
+#### 导出图表
+```yaml
 GET /api/charts/{id}/export?format=png
 ```
 
 ---
 
-## 6. 项目目录结构
+## 6. 项目结构
 
 ```
 论文小助手/
@@ -530,7 +589,7 @@ GET /api/charts/{id}/export?format=png
 │   │   │   ├── pdf_parser.py  # PDF解析
 │   │   │   ├── embedder.py    # 文本向量化
 │   │   │   ├── retriever.py   # FAISS检索
-│   │   │   ├── kim_client.py  # Kimi API封装
+│   │   │   ├── kimi_client.py # Kimi API封装
 │   │   │   ├── reviewer.py    # 综述生成
 │   │   │   └── chart_gen.py   # 图表生成
 │   │   ├── models/            # 数据模型
@@ -567,9 +626,9 @@ GET /api/charts/{id}/export?format=png
 
 ---
 
-## 7. 核心代码示例
+## 7. 核心实现
 
-### 7.1 FAISS向量检索实现
+### 7.1 FAISS向量检索
 
 ```python
 import faiss
@@ -653,7 +712,7 @@ class FAISSRetriever:
                 self.metadata = pickle.load(f)
 ```
 
-### 7.2 Kimi API 调用封装
+### 7.2 Kimi API 调用
 
 ```python
 import openai
@@ -675,9 +734,7 @@ class KimiClient:
         stream: bool = True,
         temperature: float = 0.3
     ) -> Iterator[str]:
-        """
-        调用Kimi对话接口
-        """
+        """调用Kimi对话接口"""
         try:
             response = self.client.chat.completions.create(
                 model=self.model,
@@ -702,9 +759,7 @@ class KimiClient:
         contexts: List[Dict],
         chat_history: List[Dict] = None
     ) -> List[Dict]:
-        """
-        构建RAG对话的Prompt
-        """
+        """构建RAG对话的Prompt"""
         # 构建上下文
         context_text = "\n\n".join([
             f"【文献 {i+1}】{ctx.get('title', 'Unknown')}, 第{ctx.get('page_number', '?')}页\n{ctx['content'][:1000]}"
@@ -733,7 +788,7 @@ class KimiClient:
         return messages
 ```
 
-### 7.3 PDF解析实现
+### 7.3 PDF解析
 
 ```python
 import pdfplumber
@@ -764,7 +819,7 @@ class PDFParser:
                 text = page.extract_text() or ""
                 full_text += f"\n\n--- Page {page_num} ---\n{text}"
             
-            # 提取元数据（简化版，实际可用正则或NLP）
+            # 提取元数据
             result["title"] = self._extract_title(full_text)
             result["abstract"] = self._extract_abstract(full_text)
             result["chunks"] = self._split_into_chunks(full_text)
@@ -818,7 +873,7 @@ class PDFParser:
         return chunks
 ```
 
-### 7.4 图表生成实现
+### 7.4 图表生成
 
 ```python
 import pandas as pd
@@ -851,9 +906,7 @@ class ChartGenerator:
         y_range: Optional[List] = None,
         style: Dict = None
     ) -> str:
-        """
-        生成图表，返回base64编码的图片
-        """
+        """生成图表，返回base64编码的图片"""
         style = style or {}
         
         # 数据筛选
@@ -900,9 +953,9 @@ class ChartGenerator:
 
 ---
 
-## 8. 部署与配置
+## 8. 部署配置
 
-### 8.1 环境变量配置
+### 8.1 环境变量
 
 ```bash
 # .env 文件
@@ -917,7 +970,7 @@ CHUNK_OVERLAP=128
 TOP_K_RETRIEVAL=5
 ```
 
-### 8.2 依赖安装
+### 8.2 依赖列表
 
 ```txt
 # requirements.txt
@@ -952,39 +1005,70 @@ npm run dev
 
 ---
 
-## 9. 功能验收标准
+## 9. 验收标准
 
 ### 9.1 文献管理
-- [ ] 支持单次上传最多20个PDF文件
-- [ ] 解析准确率 > 90%（标题、作者、摘要）
-- [ ] 100页PDF处理时间 < 30秒
-- [ ] 向量化存储成功率 100%
+
+| 验收项 | 标准 | 优先级 |
+|-------|-----|-------|
+| 批量上传 | 单次最多20个PDF文件 | P0 |
+| 解析准确率 | 标题、作者、摘要提取 > 90% | P0 |
+| 处理性能 | 100页PDF处理时间 < 30秒 | P1 |
+| 向量化存储 | 成功率 100% | P0 |
 
 ### 9.2 智能对话
-- [ ] 问答响应时间 < 5秒（不含大模型生成时间）
-- [ ] 答案溯源准确率 > 95%
-- [ ] 支持多轮对话上下文关联
-- [ ] 支持指定文献范围问答
+
+| 验收项 | 标准 | 优先级 |
+|-------|-----|-------|
+| 响应时间 | 检索响应 < 5秒（不含大模型生成） | P0 |
+| 答案溯源 | 引用准确率 > 95% | P0 |
+| 多轮对话 | 支持上下文关联 | P1 |
+| 文献限定 | 支持指定文献范围问答 | P1 |
 
 ### 9.3 综述生成
-- [ ] 生成3000字综述时间 < 60秒
-- [ ] 综述结构完整（背景、方法、结论）
-- [ ] 引用溯源准确
-- [ ] 支持导出PDF/Word/Markdown
+
+| 验收项 | 标准 | 优先级 |
+|-------|-----|-------|
+| 生成性能 | 3000字综述 < 60秒 | P1 |
+| 结构完整性 | 包含背景、方法、结论等章节 | P0 |
+| 引用溯源 | 引用来源准确可追踪 | P0 |
+| 导出功能 | 支持PDF/Word/Markdown | P1 |
 
 ### 9.4 图表生成
-- [ ] 支持Excel/CSV导入
-- [ ] 支持4种图表类型（折线、柱状、散点、饼图）
-- [ ] X/Y轴范围可配置
-- [ ] 图表导出支持PNG/JPG/SVG/PDF
+
+| 验收项 | 标准 | 优先级 |
+|-------|-----|-------|
+| 数据导入 | 支持Excel/CSV | P0 |
+| 图表类型 | 支持折线、柱状、散点、饼图 | P0 |
+| 轴配置 | X/Y轴范围可配置 | P1 |
+| 导出格式 | 支持PNG/JPG/SVG/PDF | P1 |
 
 ---
 
-## 10. 后续优化方向
+## 10. Roadmap
 
-1. **多模态支持**：支持图表、公式的OCR识别
+### Phase 1 - MVP（4周）
+- [x] PDF解析与存储
+- [x] FAISS向量检索
+- [x] 基础对话功能
+- [x] Kimi API集成
+
+### Phase 2 - 功能完善（3周）
+- [ ] 综述生成功能
+- [ ] 图表生成模块
+- [ ] 前端界面优化
+- [ ] 对话历史管理
+
+### Phase 3 - 增强优化（持续）
+- [ ] 多模态支持（图表OCR）
+- [ ] 协作功能（文献共享）
+- [ ] AI助手增强（润色、翻译）
+- [ ] 知识图谱构建
+
+### 未来方向
+1. **多模态支持**：图表、公式的OCR识别
 2. **协作功能**：文献共享、评论、批注
-3. **AI助手增强**：支持论文润色、翻译、格式检查
+3. **AI助手增强**：论文润色、翻译、格式检查
 4. **知识图谱**：构建文献间的引用关系图谱
 5. **移动端适配**：开发iOS/Android应用
 
@@ -992,16 +1076,16 @@ npm run dev
 
 ## 附录
 
-### A. Kimi API 说明
-- 官网：https://platform.moonshot.cn/
-- 支持模型：moonshot-v1-8k / 32k / 128k
-- 计费：按token计费
+### A. 参考资料
 
-### B. FAISS 参考资料
-- 官方文档：https://github.com/facebookresearch/faiss/wiki
-- 中文教程：https://faiss.ai/
+| 资源 | 链接 |
+|-----|-----|
+| Kimi API文档 | https://platform.moonshot.cn/ |
+| FAISS文档 | https://github.com/facebookresearch/faiss/wiki |
+| FastAPI文档 | https://fastapi.tiangolo.com/ |
 
-### C. 推荐前置知识
+### B. 推荐前置知识
+
 - Python异步编程 (async/await)
 - FastAPI框架基础
 - 向量检索原理

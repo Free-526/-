@@ -16,6 +16,7 @@ from app.core.pdf_parser import get_pdf_parser
 from app.core.embedder import get_embedder
 from app.core.faiss_retriever import get_retriever
 from app.core.auth import get_current_user, get_optional_user
+from app.core.analytics import Tracker
 from app.config import config
 
 router = APIRouter()
@@ -292,7 +293,8 @@ async def list_papers(
             "status": paper.status
         }
         items.append(item)
-    
+
+
     return ResponseModel(
         code=200,
         data={
@@ -304,25 +306,34 @@ async def list_papers(
 
 @router.get("/{paper_id}", response_model=ResponseModel)
 async def get_paper(
-    paper_id: int, 
+    paper_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """获取文献详情"""
     paper = db.query(Paper).filter(Paper.id == paper_id, Paper.user_id == current_user.id).first()
-    
+
     if not paper:
         raise HTTPException(status_code=404, detail="文献不存在或无权访问")
-    
+
+    try:
+        authors = json.loads(paper.authors) if paper.authors else []
+    except:
+        authors = []
+    try:
+        keywords = json.loads(paper.keywords) if paper.keywords else []
+    except:
+        keywords = []
+
     return ResponseModel(
         code=200,
         data={
             "id": paper.id,
             "file_name": paper.file_name,
             "title": paper.title,
-            "authors": json.loads(paper.authors) if paper.authors else [],
+            "authors": authors,
             "abstract": paper.abstract,
-            "keywords": json.loads(paper.keywords) if paper.keywords else [],
+            "keywords": keywords,
             "upload_time": paper.upload_time,
             "page_count": paper.page_count,
             "chunk_count": paper.chunk_count,
@@ -333,29 +344,29 @@ async def get_paper(
 
 @router.delete("/{paper_id}", response_model=ResponseModel)
 async def delete_paper(
-    paper_id: int, 
+    paper_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """删除文献（软删除）"""
     paper = db.query(Paper).filter(Paper.id == paper_id, Paper.user_id == current_user.id).first()
-    
+
     if not paper:
         raise HTTPException(status_code=404, detail="文献不存在或无权访问")
-    
+
     # 获取关联的chunks并从FAISS中删除
     chunks = db.query(Chunk).filter(Chunk.paper_id == paper_id).all()
     faiss_ids = [c.faiss_id for c in chunks if c.faiss_id is not None]
-    
+
     if faiss_ids:
         retriever = get_retriever()
         retriever.delete_vectors(faiss_ids)
         retriever.save_index()
-    
+
     # 软删除
     paper.status = "deleted"
     db.commit()
-    
+
     return ResponseModel(code=200, message="删除成功")
 
 
@@ -369,14 +380,14 @@ async def get_paper_chunks(
 ):
     """获取文献的文本块列表"""
     paper = db.query(Paper).filter(Paper.id == paper_id, Paper.user_id == current_user.id).first()
-    
+
     if not paper:
         raise HTTPException(status_code=404, detail="文献不存在或无权访问")
-    
+
     query = db.query(Chunk).filter(Chunk.paper_id == paper_id)
     total = query.count()
     chunks = query.order_by(Chunk.chunk_index).offset((page - 1) * size).limit(size).all()
-    
+
     return ResponseModel(
         code=200,
         data={

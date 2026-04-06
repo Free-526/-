@@ -4,6 +4,8 @@
 import os
 import shutil
 from typing import Optional
+
+import data
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
 from sqlalchemy.orm import Session
 
@@ -11,6 +13,7 @@ from app.models.database import get_db, Dataset, ChartConfig, User
 from app.models.schemas import ResponseModel, ChartGenerateRequest, DatasetResponse
 from app.core.chart_generator import get_chart_generator
 from app.core.auth import get_current_user
+from app.core.analytics import Tracker
 from app.config import config
 
 router = APIRouter()
@@ -67,6 +70,23 @@ async def upload_dataset(
         db.add(dataset)
         db.commit()
         db.refresh(dataset)
+        
+        # 记录数据集上传事件
+        Tracker.track_event(
+            db=db,
+            user_id=current_user.id,
+            event_name="upload_dataset",
+            event_type="data",
+            properties={
+                "file_name": file.filename,
+                "file_type": file_type,
+                "row_count": len(df),
+                "column_count": len(columns)
+            }
+        )
+        
+        # 增加数据集上传计数
+        Tracker.increment_metric(db, current_user.id, "dataset_count")
         
         # 生成预览数据（前10行）
         preview = df.head(10).to_dict(orient='records')
@@ -239,6 +259,23 @@ async def generate_chart(
         )
         db.add(chart_config)
         db.commit()
+        
+        # 记录图表生成事件
+        Tracker.track_event(
+            db=db,
+            user_id=current_user.id,
+            event_name="generate_chart",
+            event_type="chart",
+            properties={
+                "chart_type": request.chart_type,
+                "dataset_id": request.dataset_id,
+                "x_column": request.x_column,
+                "y_column": request.y_column
+            }
+        )
+        
+        # 增加图表生成计数
+        Tracker.increment_metric(db, current_user.id, "chart_count")
         
         return ResponseModel(
             code=200,

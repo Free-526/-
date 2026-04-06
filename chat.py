@@ -18,6 +18,7 @@ from app.core.kimi_client import get_kimi_client
 from app.core.embedder import get_embedder
 from app.core.faiss_retriever import get_retriever
 from app.core.auth import get_current_user
+from app.core.analytics import Tracker
 
 router = APIRouter()
 
@@ -36,6 +37,15 @@ async def create_session(
     db.add(db_session)
     db.commit()
     db.refresh(db_session)
+    
+    # 记录会话创建事件
+    Tracker.track_event(
+        db=db,
+        user_id=current_user.id,
+        event_name="create_chat_session",
+        event_type="chat",
+        properties={"session_name": session.session_name}
+    )
     
     return ResponseModel(
         code=200,
@@ -172,6 +182,18 @@ async def send_message(
     )
     db.add(user_msg)
     db.commit()
+    
+    # 记录聊天事件
+    Tracker.track_event(
+        db=db,
+        user_id=current_user.id,
+        event_name="chat_message",
+        event_type="chat",
+        properties={"session_id": message.session_id, "has_paper_ids": bool(message.paper_ids)}
+    )
+    
+    # 增加聊天次数计数
+    Tracker.increment_metric(db, current_user.id, "chat_count")
     
     # 获取历史消息（最近10条）
     history = db.query(ChatMessage).filter(

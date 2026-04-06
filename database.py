@@ -148,6 +148,57 @@ class ChartConfig(Base):
     dataset = relationship("Dataset", back_populates="charts")
 
 
+# ========== 埋点数据模型 ==========
+
+class EventLog(Base):
+    """用户行为事件表"""
+    __tablename__ = "event_logs"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    event_name = Column(String(50), nullable=False, index=True)
+    event_type = Column(String(20), nullable=False)  # click/page/api/error
+    page_path = Column(String(200))
+    session_id = Column(String(100))
+    ip_address = Column(String(50))
+    user_agent = Column(String(500))
+    properties = Column(Text)  # JSON格式扩展字段
+    created_at = Column(DateTime, default=datetime.now, index=True)
+
+
+class PerformanceLog(Base):
+    """性能监控表"""
+    __tablename__ = "performance_logs"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    operation = Column(String(50), nullable=False)  # 操作类型
+    duration_ms = Column(Integer)  # 耗时（毫秒）
+    status = Column(String(20))  # success/error/timeout
+    error_message = Column(Text)
+    resource_size = Column(Integer)  # 资源大小（字节）
+    meta_data = Column(Text)  # JSON格式附加信息（原名metadata，避免保留字冲突）
+    created_at = Column(DateTime, default=datetime.now)
+
+
+class BusinessMetric(Base):
+    """业务指标表（用于计费/限流）"""
+    __tablename__ = "business_metrics"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    metric_date = Column(String(10), nullable=False)  # YYYY-MM-DD
+    metric_type = Column(String(30), nullable=False)  # chat_count/token_count/upload_count
+    metric_value = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    
+    # 联合唯一约束
+    __table_args__ = (
+        UniqueConstraint('user_id', 'metric_date', 'metric_type', name='uix_user_metric'),
+    )
+
+
 # 创建数据库引擎
 engine = create_engine(
     f"sqlite:///{config.DB_PATH}",

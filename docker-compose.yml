@@ -1,0 +1,49 @@
+# Docker Compose 配置
+# 生产环境部署
+
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: paper-assistant
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    environment:
+      - KIMI_API_KEY=${KIMI_API_KEY}
+      - KIMI_BASE_URL=${KIMI_BASE_URL:-https://open.bigmodel.cn/api/paas/v4}
+      - KIMI_MODEL=${KIMI_MODEL:-glm-4}
+      - DEBUG=false
+      - HOST=0.0.0.0
+      - PORT=8000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # 可选：使用 PostgreSQL 替代 SQLite
+  # db:
+  #   image: postgres:15-alpine
+  #   container_name: paper-assistant-db
+  #   environment:
+  #     POSTGRES_USER: paper
+  #     POSTGRES_PASSWORD: ${DB_PASSWORD}
+  #     POSTGRES_DB: paper_assistant
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   restart: unless-stopped
+
+  # 可选：Redis 缓存
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: paper-assistant-redis
+  #   restart: unless-stopped
+
+volumes:
+  postgres_data:
